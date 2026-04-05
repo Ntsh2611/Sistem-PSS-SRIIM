@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, ArrowRight } from 'lucide-react';
+import { bgImage, logoImage } from '../assets/images';
 
 export default function Login({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState('');
@@ -18,7 +19,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="min-h-screen flex flex-col justify-center items-center p-4 relative overflow-hidden bg-amber-950">
       <img 
-        src="/bg.png" 
+        src={bgImage} 
         alt="Background" 
         className="absolute inset-0 w-full h-full object-cover z-0 opacity-90"
       />
@@ -27,7 +28,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
       <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl border border-amber-900/20 overflow-hidden relative z-10">
         <div className="bg-amber-900 p-8 text-center">
           <div className="w-24 h-24 mx-auto mb-4 bg-white rounded-2xl p-2 shadow-lg flex items-center justify-center">
-            <img src="/logo.png" alt="Logo SRIIM" className="w-full h-full object-contain" />
+            <img src={logoImage} alt="Logo SRIIM" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-white">Sistem PSS SRIIM</h1>
           <p className="text-yellow-100 mt-2 text-sm">Sila masukkan kata laluan untuk log masuk</p>
