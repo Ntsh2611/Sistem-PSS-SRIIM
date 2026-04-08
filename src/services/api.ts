@@ -98,7 +98,14 @@ export const api = {
     if (data.error) throw new Error(data.error);
     return Array.isArray(data) ? data.map((l, i) => ({
       ...l, 
-      id: l.id && l.id !== 'undefined' && l.id !== '' ? l.id : `loan-${i}`
+      id: l.id || l['ID PINJAM'] || l.ID || `loan-${i}`,
+      studentName: l.studentName || l['NAMA MURID'] || l.NAMA || l.Nama || '',
+      studentClass: l.studentClass || l.KELAS || l.Kelas || '',
+      bookTitle: l.bookTitle || l['TAJUK BUKU'] || l.TAJUK || '',
+      startDate: (l.startDate || l['TARIKH PINJAM'] || '').toString().split('T')[0],
+      returnDate: (l.returnDate || l['TARIKH PULANG'] || '').toString().split('T')[0],
+      status: l.status || l['STATUS PINJAMAN'] || l.STATUS || 'Aktif',
+      fine: Number(l.fine || l.DENDA || 0)
     })) : [];
   },
 
@@ -149,7 +156,14 @@ export const api = {
     if (data.error) throw new Error(data.error);
     return Array.isArray(data) ? data.map((l, i) => ({
       ...l, 
-      id: l.id && l.id !== 'undefined' && l.id !== '' ? l.id : `tloan-${i}`
+      id: l.id || l['ID PINJAM'] || l.ID || `tloan-${i}`,
+      studentName: l.studentName || l['NAMA GURU'] || l.NAMA || '',
+      studentClass: l.studentClass || l.KELAS || l.Kelas || '',
+      bookTitle: l.bookTitle || l['TAJUK BUKU'] || l.TAJUK || '',
+      startDate: (l.startDate || l['TARIKH PINJAM'] || '').toString().split('T')[0],
+      returnDate: (l.returnDate || l['TARIKH PULANG'] || '').toString().split('T')[0],
+      status: l.status || l['STATUS PINJAMAN'] || l.STATUS || 'Aktif',
+      fine: Number(l.fine || l.DENDA || 0)
     })) : [];
   },
 

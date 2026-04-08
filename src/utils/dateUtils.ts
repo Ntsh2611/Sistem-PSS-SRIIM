@@ -26,3 +26,13 @@ export const isOverdue = (returnDateStr: string): boolean => {
 
   return today > returnDate;
 };
+
+export const getOverdueDays = (returnDateStr: string): number => {
+  const returnDate = parseISO(returnDateStr);
+  const today = new Date();
+  
+  today.setHours(0, 0, 0, 0);
+  returnDate.setHours(0, 0, 0, 0);
+
+  return differenceInDays(today, returnDate);
+};

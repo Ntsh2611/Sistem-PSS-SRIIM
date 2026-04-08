@@ -1,4 +1,4 @@
-import { Search, CheckCircle2, X } from 'lucide-react';
+import { Search, CheckCircle2, X, PlusCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { Book, Teacher } from '../types';
@@ -18,13 +18,14 @@ export default function TeacherLoanForm({ onSuccess }: { onSuccess: () => void }
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   
   const [teacherName, setTeacherName] = useState('');
-  const [subject, setSubject] = useState('');
+  const [subjectSearchQuery, setSubjectSearchQuery] = useState('');
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBooks, setSelectedBooks] = useState<Book[]>([]);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   
   const defaultReturn = new Date();
-  defaultReturn.setDate(defaultReturn.getDate() + 14); // Teachers get 14 days
+  defaultReturn.setMonth(defaultReturn.getMonth() + 10); // Teachers get 10 months
   const [returnDate, setReturnDate] = useState(defaultReturn.toISOString().split('T')[0]);
 
   const [loading, setLoading] = useState(false);
@@ -50,6 +51,25 @@ export default function TeacherLoanForm({ onSuccess }: { onSuccess: () => void }
     fetchData();
   }, []);
 
+  const filteredSubjects = subjectSearchQuery
+    ? SUBJECTS.filter(s => s.toLowerCase().includes(subjectSearchQuery.toLowerCase()))
+    : [];
+
+  const handleAddSubject = (s: string) => {
+    if (selectedSubjects.length >= 10) {
+      alert("Maksimum 10 subjek sahaja dibenarkan.");
+      return;
+    }
+    if (!selectedSubjects.includes(s)) {
+      setSelectedSubjects([...selectedSubjects, s]);
+    }
+    setSubjectSearchQuery('');
+  };
+
+  const handleRemoveSubject = (s: string) => {
+    setSelectedSubjects(selectedSubjects.filter(item => item !== s));
+  };
+
   const searchResults = searchQuery 
     ? books.filter(b => 
         b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -74,16 +94,17 @@ export default function TeacherLoanForm({ onSuccess }: { onSuccess: () => void }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!teacherName || !subject || selectedBooks.length === 0 || !startDate || !returnDate) {
+    if (!teacherName || selectedSubjects.length === 0 || selectedBooks.length === 0 || !startDate || !returnDate) {
       return;
     }
 
     setSubmitting(true);
     try {
+      const subjectsString = selectedSubjects.join(', ');
       await Promise.all(selectedBooks.map(book => 
         api.createTeacherLoan({
           studentName: teacherName,
-          studentClass: subject,
+          studentClass: subjectsString,
           bookTitle: book.title,
           startDate,
           returnDate
@@ -135,7 +156,10 @@ export default function TeacherLoanForm({ onSuccess }: { onSuccess: () => void }
                 setTeacherName(e.target.value);
                 const selectedTeacher = teachers.find(t => t.name === e.target.value);
                 if (selectedTeacher && selectedTeacher.subject) {
-                  setSubject(selectedTeacher.subject);
+                  // If teacher has a subject in data, add it if not already there
+                  if (!selectedSubjects.includes(selectedTeacher.subject)) {
+                    setSelectedSubjects(prev => [...prev, selectedTeacher.subject!].slice(0, 10));
+                  }
                 }
               }}
               className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-600 focus:border-amber-600 outline-none transition-all bg-slate-50 hover:bg-white"
@@ -149,18 +173,62 @@ export default function TeacherLoanForm({ onSuccess }: { onSuccess: () => void }
           </div>
 
           <div className="space-y-2.5">
-            <label className="block text-sm font-semibold text-slate-700">Subjek Diajar</label>
-            <select 
-              value={subject} 
-              onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-600 focus:border-amber-600 outline-none transition-all bg-slate-50 hover:bg-white"
-              required
-            >
-              <option value="">-- Pilih Subjek --</option>
-              {SUBJECTS.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            <label className="block text-sm font-semibold text-slate-700">Subjek Diajar (Maksimum 10)</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Cari subjek..."
+                value={subjectSearchQuery}
+                onChange={(e) => setSubjectSearchQuery(e.target.value)}
+                disabled={selectedSubjects.length >= 10}
+                className="w-full pl-11 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-600 focus:border-amber-600 outline-none transition-all bg-slate-50 hover:bg-white disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+            </div>
+            
+            {subjectSearchQuery && (
+              <div className="mt-1 border border-slate-200 rounded-xl max-h-48 overflow-y-auto bg-white shadow-lg absolute z-30 w-full max-w-[calc(100%-4rem)] md:max-w-[calc(24rem-4rem)]">
+                {filteredSubjects.length === 0 ? (
+                  <div className="p-4 text-sm text-slate-500 text-center">Tiada subjek dijumpai.</div>
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {filteredSubjects.map(s => {
+                      const isSelected = selectedSubjects.includes(s);
+                      return (
+                        <li key={s}>
+                          <button
+                            type="button"
+                            disabled={isSelected}
+                            onClick={() => handleAddSubject(s)}
+                            className={`w-full text-left px-4 py-3 flex justify-between items-center group transition-colors ${
+                              !isSelected ? 'hover:bg-amber-50 cursor-pointer' : 'opacity-50 cursor-not-allowed bg-slate-50'
+                            }`}
+                          >
+                            <span className="text-sm font-medium text-slate-800">{s}</span>
+                            {!isSelected && <PlusCircle className="w-4 h-4 text-amber-600" />}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {selectedSubjects.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedSubjects.map(s => (
+                  <span key={s} className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-900 text-xs font-bold rounded-full border border-amber-200">
+                    {s}
+                    <button type="button" onClick={() => handleRemoveSubject(s)} className="hover:text-red-600">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -269,7 +337,7 @@ export default function TeacherLoanForm({ onSuccess }: { onSuccess: () => void }
         <div className="pt-8 flex justify-end">
           <button
             type="submit"
-            disabled={submitting || !teacherName || !subject || selectedBooks.length === 0 || successMessage}
+            disabled={submitting || !teacherName || selectedSubjects.length === 0 || selectedBooks.length === 0 || successMessage}
             className="bg-amber-800 hover:bg-amber-900 text-white font-semibold py-3 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {submitting ? (

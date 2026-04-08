@@ -2,7 +2,7 @@ import { AlertCircle, BookCheck, Clock, ChevronLeft, ChevronRight } from 'lucide
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { Loan } from '../types';
-import { calculateFine, isOverdue } from '../utils/dateUtils';
+import { isOverdue, getOverdueDays } from '../utils/dateUtils';
 
 export default function TeacherDashboard() {
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -25,21 +25,6 @@ export default function TeacherDashboard() {
     fetchData();
   }, []);
 
-  const handleReturn = async (loan: Loan) => {
-    const fine = isOverdue(loan.returnDate) ? calculateFine(loan.returnDate) : 0;
-    if (fine > 0) {
-      // Handled by modal
-    }
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setLoans(prev => prev.map(l => l.id === loan.id ? { ...l, status: 'Selesai', fine } : l));
-    } catch (error) {
-      console.error('Failed to return book', error);
-    }
-  };
-
   const [returnModal, setReturnModal] = useState<{isOpen: boolean, loan: Loan | null, fine: number}>({
     isOpen: false,
     loan: null,
@@ -51,8 +36,7 @@ export default function TeacherDashboard() {
   const ITEMS_PER_PAGE = 15;
 
   const confirmReturn = (loan: Loan) => {
-    const fine = isOverdue(loan.returnDate) ? calculateFine(loan.returnDate) : 0;
-    setReturnModal({ isOpen: true, loan, fine });
+    setReturnModal({ isOpen: true, loan, fine: 0 });
   };
 
   const executeReturn = async () => {
@@ -122,7 +106,7 @@ export default function TeacherDashboard() {
                 <th className="px-6 py-4 font-medium">Jawatan/Subjek</th>
                 <th className="px-6 py-4 font-medium">Tajuk Buku</th>
                 <th className="px-6 py-4 font-medium">Tarikh Pulang</th>
-                <th className="px-6 py-4 font-medium">Denda Semasa</th>
+                <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium text-right">Tindakan</th>
               </tr>
             </thead>
@@ -139,24 +123,47 @@ export default function TeacherDashboard() {
               ) : (
                 paginatedActiveLoans.map((loan) => {
                   const overdue = isOverdue(loan.returnDate);
-                  const currentFine = overdue ? calculateFine(loan.returnDate) : 0;
+                  const overdueDays = overdue ? getOverdueDays(loan.returnDate) : 0;
+                  const showWarning = overdueDays > 7;
 
                   return (
-                    <tr key={loan.id} className={`hover:bg-slate-50 transition-colors ${overdue ? 'bg-red-50/30' : ''}`}>
+                    <tr key={loan.id} className={`hover:bg-slate-50 transition-colors ${showWarning ? 'bg-red-50' : overdue ? 'bg-orange-50/30' : ''}`}>
                       <td className="px-6 py-4 text-sm font-medium text-slate-900">{loan.id}</td>
                       <td className="px-6 py-4 text-sm text-slate-700 font-medium">{loan.studentName}</td>
                       <td className="px-6 py-4 text-sm text-slate-500">{loan.studentClass}</td>
                       <td className="px-6 py-4 text-sm text-slate-700">{loan.bookTitle}</td>
                       <td className="px-6 py-4 text-sm">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                          overdue ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-yellow-50 text-amber-800 border border-yellow-200'
-                        }`}>
-                          {overdue && <AlertCircle className="w-3.5 h-3.5" />}
-                          {loan.returnDate}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                            overdue ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-yellow-50 text-amber-800 border border-yellow-200'
+                          }`}>
+                            {overdue && <AlertCircle className="w-3.5 h-3.5" />}
+                            {loan.returnDate}
+                          </span>
+                          {overdue && (
+                            <span className="text-[10px] font-bold text-red-500 mt-1 uppercase">
+                              Lewat {overdueDays} Hari
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-700">
-                        {currentFine > 0 ? <span className="text-red-600">RM {currentFine.toFixed(2)}</span> : <span className="text-slate-400">-</span>}
+                      <td className="px-6 py-4 text-sm">
+                        {showWarning ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white shadow-sm animate-pulse">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            AMARAN
+                          </span>
+                        ) : overdue ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-200">
+                            <Clock className="w-3.5 h-3.5" />
+                            LEWAT
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                            <BookCheck className="w-3.5 h-3.5" />
+                            AKTIF
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-sm text-right">
                         <button
@@ -213,14 +220,13 @@ export default function TeacherDashboard() {
                 <th className="px-6 py-4 font-medium">Tajuk Buku</th>
                 <th className="px-6 py-4 font-medium">Tarikh Pinjam</th>
                 <th className="px-6 py-4 font-medium">Tarikh Pulang</th>
-                <th className="px-6 py-4 font-medium">Denda Dibayar</th>
                 <th className="px-6 py-4 font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {completedLoans.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <BookCheck className="w-8 h-8 text-slate-300" />
                       <p>Tiada rekod sejarah peminjaman guru.</p>
@@ -236,9 +242,6 @@ export default function TeacherDashboard() {
                     <td className="px-6 py-4 text-sm text-slate-700">{loan.bookTitle}</td>
                     <td className="px-6 py-4 text-sm text-slate-500">{loan.startDate}</td>
                     <td className="px-6 py-4 text-sm text-slate-500">{loan.returnDate}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-slate-700">
-                      {loan.fine > 0 ? <span className="text-red-600">RM {loan.fine.toFixed(2)}</span> : <span className="text-slate-400">-</span>}
-                    </td>
                     <td className="px-6 py-4 text-sm">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                         Selesai
@@ -283,15 +286,6 @@ export default function TeacherDashboard() {
             <div className="space-y-3 mb-6 text-sm text-slate-600">
               <p><span className="font-medium text-slate-700">Guru:</span> {returnModal.loan.studentName}</p>
               <p><span className="font-medium text-slate-700">Buku:</span> {returnModal.loan.bookTitle}</p>
-              {returnModal.fine > 0 && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl">
-                  <p className="text-red-800 font-medium flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" />
-                    Lewat Pulang! Denda Dikenakan.
-                  </p>
-                  <p className="text-2xl font-bold text-red-600 mt-2">RM {returnModal.fine.toFixed(2)}</p>
-                </div>
-              )}
             </div>
             <div className="flex justify-end gap-3">
               <button
