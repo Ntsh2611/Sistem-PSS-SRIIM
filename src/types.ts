@@ -12,6 +12,12 @@ export interface Student {
   className: string;
 }
 
+export interface Teacher {
+  id: string;
+  name: string;
+  subject?: string;
+}
+
 export interface Loan {
   id: string;
   studentName: string;

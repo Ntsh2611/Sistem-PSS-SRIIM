@@ -10,8 +10,10 @@ interface LayoutProps {
 
 export default function Layout({ children, activeTab, setActiveTab, onLogout }: LayoutProps) {
   const navItems = [
-    { id: 'dashboard', label: 'Pemantauan', icon: LayoutDashboard },
-    { id: 'loan', label: 'Pinjaman Baru', icon: PlusCircle },
+    { id: 'dashboard', label: 'Rekod Pinjaman Murid', icon: LayoutDashboard },
+    { id: 'teacher-dashboard', label: 'Rekod Pinjaman Guru', icon: LayoutDashboard },
+    { id: 'loan', label: 'Pinjaman Baru Murid', icon: PlusCircle },
+    { id: 'teacher-loan', label: 'Pinjaman Baru Guru', icon: PlusCircle },
   ];
 
   return (

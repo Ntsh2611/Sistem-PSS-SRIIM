@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Dashboard from './components/Dashboard';
+import TeacherDashboard from './components/TeacherDashboard';
 import Layout from './components/Layout';
 import LoanForm from './components/LoanForm';
+import TeacherLoanForm from './components/TeacherLoanForm';
 import Login from './components/Login';
 
 export default function App() {
@@ -15,7 +17,9 @@ export default function App() {
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setIsAuthenticated(false)}>
       {activeTab === 'dashboard' && <Dashboard />}
+      {activeTab === 'teacher-dashboard' && <TeacherDashboard />}
       {activeTab === 'loan' && <LoanForm onSuccess={() => setActiveTab('dashboard')} />}
+      {activeTab === 'teacher-loan' && <TeacherLoanForm onSuccess={() => setActiveTab('teacher-dashboard')} />}
     </Layout>
   );
 }
