@@ -23,7 +23,7 @@ export interface NilamRecord {
   studentName: string;
   className: string;
   totalBooks: number;
-  month: string;
+  monthlyData: Record<string, number>;
 }
 
 export interface Loan {

@@ -8,6 +8,7 @@ export default function NilamDashboard() {
   const [nilamRecords, setNilamRecords] = useState<NilamRecord[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
@@ -37,10 +38,26 @@ export default function NilamDashboard() {
     return classList.sort();
   }, [nilamRecords]);
 
-  // Compute top 5 monthly (we'll group by highest total books regardless of month if not selected, but let's assume they all have a month, or we just sort by totalBooks)
+  // Compute unique months for filter from the pre-defined list
+  const months = ['MAC', 'APRIL', 'MEI', 'JUN', 'JULAI', 'OGOS', 'SEPTEMBER', 'OKTOBER'];
+
+  // Compute top 5 monthly (using monthlyData mapping instead of singular month string)
   const top5 = useMemo(() => {
-    return [...nilamRecords].sort((a, b) => b.totalBooks - a.totalBooks).slice(0, 5);
-  }, [nilamRecords]);
+    return [...nilamRecords].map(student => {
+      // If a specific month is selected, compute score using that month ONLY
+      // otherwise fallback to their overall total JUMLAH books
+      const score = selectedMonth !== 'all' 
+        ? (student.monthlyData[selectedMonth.toUpperCase()] || 0)
+        : student.totalBooks;
+      
+      return {
+        ...student,
+        computedScore: score
+      };
+    }).filter(s => s.computedScore > 0) // only include those with actual scores
+      .sort((a, b) => b.computedScore - a.computedScore)
+      .slice(0, 5);
+  }, [nilamRecords, selectedMonth]);
 
   // Filter valid student records for the table display
   const filteredRecords = useMemo(() => {
@@ -74,13 +91,28 @@ export default function NilamDashboard() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="bg-gradient-to-br from-indigo-800 to-purple-900 rounded-2xl shadow-lg p-6 md:p-8 text-white">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
-            <Trophy className="w-8 h-8 text-yellow-400" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+              <Trophy className="w-8 h-8 text-yellow-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">Leaderboard NILAM</h2>
+              <p className="text-indigo-200">Top 5 Individu Tertinggi</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold">Leaderboard NILAM</h2>
-            <p className="text-indigo-200">Top 5 Individu Tertinggi Bulanan</p>
+          <div className="flex items-center gap-3">
+            <span className="text-indigo-200 font-medium text-sm">Pilih Bulan:</span>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-4 py-2 bg-indigo-900/50 border border-indigo-400/30 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none transition-all text-white min-w-[120px] font-medium"
+            >
+              <option value="all">Semua Bulan</option>
+              {months.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -97,11 +129,11 @@ export default function NilamDashboard() {
                 <div className="mb-3">
                   {getRankIcon(index)}
                 </div>
-                <h3 className="font-bold text-base line-clamp-2 leading-tight mb-1">{student.studentName}</h3>
+                <h3 className="font-bold text-sm line-clamp-3 leading-tight mb-1" title={student.studentName}>{student.studentName}</h3>
                 <p className="text-xs text-indigo-200 mb-3">{student.className}</p>
                 <div className="mt-auto px-4 py-1.5 bg-black/20 rounded-full flex items-center justify-center gap-2">
                   <BookOpen className="w-3.5 h-3.5 text-yellow-400" />
-                  <span className="font-bold text-lg text-yellow-400">{student.totalBooks}</span>
+                  <span className="font-bold text-lg text-yellow-400">{student.computedScore}</span>
                 </div>
               </div>
             ))}
@@ -155,7 +187,7 @@ export default function NilamDashboard() {
                 <th className="px-6 py-4 font-semibold w-16 text-center">No.</th>
                 <th className="px-6 py-4 font-semibold">Nama Murid</th>
                 <th className="px-6 py-4 font-semibold">Kelas</th>
-                <th className="px-6 py-4 font-semibold">Bulan</th>
+                <th className="px-6 py-4 font-semibold text-center">Rekod Bulanan</th>
                 <th className="px-6 py-4 font-semibold text-right">Jumlah Bacaan</th>
               </tr>
             </thead>
@@ -184,7 +216,13 @@ export default function NilamDashboard() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500">
-                      {record.month || '-'}
+                      <div className="flex flex-wrap gap-1 max-w-[200px]">
+                        {Object.entries(record.monthlyData).map(([m, count]) => (
+                          <span key={m} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-600 border border-indigo-100" title={`${m}: ${count} buku`}>
+                            {m.slice(0, 3)}: {count}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-2">

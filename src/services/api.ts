@@ -94,25 +94,65 @@ export const api = {
   async getNilamRecords(): Promise<NilamRecord[]> {
     if (!GAS_URL) {
       return [
-        { id: 'N1', studentName: 'Ali bin Abu', className: 'Tahun 1', totalBooks: 45, month: 'Mac' },
-        { id: 'N2', studentName: 'Aisyah Binti Mutalib', className: 'Tahun 4', totalBooks: 52, month: 'Mac' },
-        { id: 'N3', studentName: 'Siti Nurhaliza', className: 'Tahun 4', totalBooks: 30, month: 'Mac' },
-        { id: 'N4', studentName: 'Ahmad Albab', className: 'Tahun 6', totalBooks: 60, month: 'Mac' },
-        { id: 'N5', studentName: 'Fatimah Az-Zahra', className: 'Tahun 1', totalBooks: 25, month: 'Mac' },
-        { id: 'N6', studentName: 'Imran Zakaria', className: 'Tahun 6', totalBooks: 40, month: 'Mac' },
+        { 
+          id: 'N1', 
+          studentName: 'Ali bin Abu', 
+          className: 'Tahun 1', 
+          totalBooks: 45, 
+          monthlyData: { 'MAC': 45 } 
+        },
       ];
     }
     const res = await fetch(`${GAS_URL}?action=getNilam`);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    return Array.isArray(data) ? data.map((n, i) => ({
-      ...n,
-      id: n.id || n.ID || `nilam-${i}`,
-      studentName: n.studentName || n['NAMA MURID'] || n.NAMA || n.Nama || '',
-      className: n.className || n.KELAS || n.Kelas || '',
-      totalBooks: Number(n.totalBooks || n['JUMLAH BACAAN'] || n['JUMLAH BUKU'] || n.JUMLAH || n.BACAAN || n.NILAM || n.TOTAL || 0),
-      month: n.month || n.BULAN || n.Bulan || ''
-    })) : [];
+    
+    // Transform horizontal data to NilamRecord
+    if (Array.isArray(data)) {
+      const records: NilamRecord[] = [];
+      const monthColumns = ['MAC', 'APRIL', 'MEI', 'JUN', 'JULAI', 'OGOS', 'SEPTEMBER', 'OKTOBER'];
+      
+      data.forEach((row, i) => {
+        const studentName = row['NAMA '] || row.NAMA || row.Nama || '';
+        const className = row.KELAS || row.Kelas || '';
+        const id = row.ID_MURID || row.ID || `nilam-${i}`;
+        
+        // Grab the official JUMLAH column
+        let totalBooks = Number(row.JUMLAH || row['JUMLAH BACAAN'] || row.TOTAL || 0);
+        
+        const monthlyData: Record<string, number> = {};
+        let computedTotal = 0;
+        
+        monthColumns.forEach(month => {
+          const valStr = row[month];
+          if (valStr !== undefined && valStr !== null && valStr !== '') {
+            const val = Number(valStr);
+            if (!isNaN(val) && val > 0) {
+              monthlyData[month] = val;
+              computedTotal += val;
+            }
+          }
+        });
+        
+        // Fallback to computed if JUMLAH column is missing/empty but monthly data exists
+        if (totalBooks === 0 && computedTotal > 0) {
+          totalBooks = computedTotal;
+        }
+
+        // Only add if there is some reading data or at least the student exists with valid info
+        if (studentName && className) {
+           records.push({
+             id,
+             studentName,
+             className,
+             totalBooks,
+             monthlyData
+           });
+        }
+      });
+      return records;
+    }
+    return [];
   },
 
   async getLoans(): Promise<Loan[]> {
