@@ -18,6 +18,14 @@ export interface Teacher {
   subject?: string;
 }
 
+export interface NilamRecord {
+  id: string;
+  studentName: string;
+  className: string;
+  totalBooks: number;
+  month: string;
+}
+
 export interface Loan {
   id: string;
   studentName: string;

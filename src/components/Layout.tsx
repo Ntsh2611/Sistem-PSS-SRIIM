@@ -1,4 +1,4 @@
-import { BookOpen, LayoutDashboard, PlusCircle, LogOut } from 'lucide-react';
+import { BookOpen, LayoutDashboard, PlusCircle, LogOut, Star } from 'lucide-react';
 import React from 'react';
 
 interface LayoutProps {
@@ -12,6 +12,7 @@ export default function Layout({ children, activeTab, setActiveTab, onLogout }: 
   const navItems = [
     { id: 'dashboard', label: 'Rekod Pinjaman Murid', icon: LayoutDashboard },
     { id: 'teacher-dashboard', label: 'Rekod Pinjaman Guru', icon: LayoutDashboard },
+    { id: 'nilam', label: 'Pencapaian NILAM', icon: Star },
     { id: 'loan', label: 'Pinjaman Baru Murid', icon: PlusCircle },
     { id: 'teacher-loan', label: 'Pinjaman Baru Guru', icon: PlusCircle },
   ];

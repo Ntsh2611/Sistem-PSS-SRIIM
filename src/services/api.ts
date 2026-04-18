@@ -1,4 +1,4 @@
-import { Book, Loan, Student, Teacher } from '../types';
+import { Book, Loan, Student, Teacher, NilamRecord } from '../types';
 
 // Replace this with your deployed Google Apps Script Web App URL
 const GAS_URL = import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbwAF2pQMt5H6qvCY5r1NEzQI5HIiAcCdjSTg9Z6wEOLWSREl35NsJSs66bcerwe3Vofsw/exec';
@@ -88,6 +88,30 @@ export const api = {
       id: t.id || t.ID || `teacher-${i}`,
       name: t.name || t.Name || t.NAMA || t.Nama || 'Tanpa Nama',
       subject: t.subject || t.Subject || t.SUBJEK || t.Subjek || ''
+    })) : [];
+  },
+
+  async getNilamRecords(): Promise<NilamRecord[]> {
+    if (!GAS_URL) {
+      return [
+        { id: 'N1', studentName: 'Ali bin Abu', className: 'Tahun 1', totalBooks: 45, month: 'Mac' },
+        { id: 'N2', studentName: 'Aisyah Binti Mutalib', className: 'Tahun 4', totalBooks: 52, month: 'Mac' },
+        { id: 'N3', studentName: 'Siti Nurhaliza', className: 'Tahun 4', totalBooks: 30, month: 'Mac' },
+        { id: 'N4', studentName: 'Ahmad Albab', className: 'Tahun 6', totalBooks: 60, month: 'Mac' },
+        { id: 'N5', studentName: 'Fatimah Az-Zahra', className: 'Tahun 1', totalBooks: 25, month: 'Mac' },
+        { id: 'N6', studentName: 'Imran Zakaria', className: 'Tahun 6', totalBooks: 40, month: 'Mac' },
+      ];
+    }
+    const res = await fetch(`${GAS_URL}?action=getNilam`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return Array.isArray(data) ? data.map((n, i) => ({
+      ...n,
+      id: n.id || n.ID || `nilam-${i}`,
+      studentName: n.studentName || n['NAMA MURID'] || n.NAMA || n.Nama || '',
+      className: n.className || n.KELAS || n.Kelas || '',
+      totalBooks: Number(n.totalBooks || n['JUMLAH BACAAN'] || n['JUMLAH BUKU'] || n.JUMLAH || n.BACAAN || n.NILAM || n.TOTAL || 0),
+      month: n.month || n.BULAN || n.Bulan || ''
     })) : [];
   },
 
