@@ -1,4 +1,4 @@
-import { Book, Loan, Student, Teacher, NilamRecord } from '../types';
+import { Book, Loan, Student, Teacher, NilamRecord, User } from '../types';
 
 // Replace this with your deployed Google Apps Script Web App URL
 const GAS_URL = import.meta.env.VITE_GAS_URL || 'https://script.google.com/macros/s/AKfycbwAF2pQMt5H6qvCY5r1NEzQI5HIiAcCdjSTg9Z6wEOLWSREl35NsJSs66bcerwe3Vofsw/exec';
@@ -50,6 +50,32 @@ let MOCK_TEACHER_LOANS: Loan[] = [
 ];
 
 export const api = {
+  async login(id: string, password: string): Promise<User> {
+    if (!GAS_URL) {
+      if (id === 'admin' && password === 'pssriim0001') {
+        return { id: 'admin', name: 'Admin Perpustakaan' };
+      }
+      throw new Error('Sila hubungkan Google Apps Script untuk sistem log masuk.');
+    }
+
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      redirect: 'follow',
+      body: JSON.stringify({
+        action: 'login',
+        payload: { id: id.trim(), password: password.trim() }
+      }),
+    });
+    const data = await res.json();
+    if (data.success && data.user) {
+      return data.user;
+    }
+    throw new Error(data.error || 'ID atau Kata Laluan salah');
+  },
+
   async getBooks(): Promise<Book[]> {
     if (!GAS_URL) return [...MOCK_BOOKS];
     const res = await fetch(`${GAS_URL}?action=getBooks`);
@@ -173,10 +199,14 @@ export const api = {
     })) : [];
   },
 
-  async createLoan(payload: Omit<Loan, 'id' | 'status' | 'fine'>): Promise<{ success: boolean; id?: string }> {
+  async createLoan(payload: Omit<Loan, 'id' | 'status' | 'fine'> & { ppssId?: string }): Promise<{ success: boolean; id?: string }> {
     if (!GAS_URL) {
       const newLoan: Loan = {
-        ...payload,
+        studentName: payload.studentName,
+        studentClass: payload.studentClass,
+        bookTitle: payload.bookTitle,
+        startDate: payload.startDate,
+        returnDate: payload.returnDate,
         id: `P${Date.now()}`,
         status: 'Aktif',
         fine: 0
@@ -189,6 +219,10 @@ export const api = {
 
     const res = await fetch(GAS_URL, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      redirect: 'follow',
       body: JSON.stringify({ action: 'createLoan', payload }),
     });
     return res.json();
@@ -208,6 +242,10 @@ export const api = {
 
     const res = await fetch(GAS_URL, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      redirect: 'follow',
       body: JSON.stringify({ action: 'returnBook', payload: { loanId, bookTitle, fine } }),
     });
     return res.json();
@@ -231,10 +269,14 @@ export const api = {
     })) : [];
   },
 
-  async createTeacherLoan(payload: Omit<Loan, 'id' | 'status' | 'fine'>): Promise<{ success: boolean; id?: string }> {
+  async createTeacherLoan(payload: Omit<Loan, 'id' | 'status' | 'fine'> & { ppssId?: string }): Promise<{ success: boolean; id?: string }> {
     if (!GAS_URL) {
       const newLoan: Loan = {
-        ...payload,
+        studentName: payload.studentName,
+        studentClass: payload.studentClass,
+        bookTitle: payload.bookTitle,
+        startDate: payload.startDate,
+        returnDate: payload.returnDate,
         id: `G${Date.now()}-${Math.floor(Math.random()*1000)}`,
         status: 'Aktif',
         fine: 0
@@ -245,6 +287,10 @@ export const api = {
 
     const res = await fetch(GAS_URL, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      redirect: 'follow',
       body: JSON.stringify({ action: 'createTeacherLoan', payload }),
     });
     return res.json();
@@ -262,6 +308,10 @@ export const api = {
 
     const res = await fetch(GAS_URL, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      redirect: 'follow',
       body: JSON.stringify({ action: 'returnTeacherBook', payload: { loanId, fine } }),
     });
     return res.json();

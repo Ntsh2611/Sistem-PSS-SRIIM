@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { Book, Student } from '../types';
 
-export default function LoanForm({ onSuccess }: { onSuccess: () => void }) {
+export default function LoanForm({ onSuccess, ppssId }: { onSuccess: () => void, ppssId: string }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   
@@ -71,7 +71,8 @@ export default function LoanForm({ onSuccess }: { onSuccess: () => void }) {
         studentClass: studentObj.className,
         bookTitle: selectedBook.title,
         startDate,
-        returnDate
+        returnDate,
+        ppssId
       });
       
       setSuccessMessage(true);

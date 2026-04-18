@@ -1,14 +1,16 @@
 import { BookOpen, LayoutDashboard, PlusCircle, LogOut, Star } from 'lucide-react';
 import React from 'react';
+import { User } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
+  user?: User;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onLogout: () => void;
 }
 
-export default function Layout({ children, activeTab, setActiveTab, onLogout }: LayoutProps) {
+export default function Layout({ children, user, activeTab, setActiveTab, onLogout }: LayoutProps) {
   const navItems = [
     { id: 'dashboard', label: 'Rekod Pinjaman Murid', icon: LayoutDashboard },
     { id: 'teacher-dashboard', label: 'Rekod Pinjaman Guru', icon: LayoutDashboard },
@@ -59,11 +61,11 @@ export default function Layout({ children, activeTab, setActiveTab, onLogout }: 
           </h2>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="font-semibold text-neutral-800 text-sm">Admin Perpustakaan</p>
-              <p className="text-xs text-neutral-500">Pengawas PSS</p>
+              <p className="font-semibold text-neutral-800 text-sm">{user?.name || 'Admin Perpustakaan'}</p>
+              <p className="text-xs text-neutral-500">{user?.id === 'admin' ? 'Pengawas PSS' : `ID: ${user?.id}`}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-yellow-100 border border-yellow-200 flex items-center justify-center text-amber-900 font-bold shadow-sm">
-              A
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
             </div>
             <div className="w-px h-8 bg-neutral-200 mx-2"></div>
             <button 

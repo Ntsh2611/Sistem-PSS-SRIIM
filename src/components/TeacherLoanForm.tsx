@@ -13,7 +13,7 @@ const SUBJECTS = [
   'Reka Bentuk & Teknologi (RBT)'
 ];
 
-export default function TeacherLoanForm({ onSuccess }: { onSuccess: () => void }) {
+export default function TeacherLoanForm({ onSuccess, ppssId }: { onSuccess: () => void, ppssId: string }) {
   const [books, setBooks] = useState<Book[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   
@@ -107,7 +107,8 @@ export default function TeacherLoanForm({ onSuccess }: { onSuccess: () => void }
           studentClass: subjectsString,
           bookTitle: book.title,
           startDate,
-          returnDate
+          returnDate,
+          ppssId
         })
       ));
       

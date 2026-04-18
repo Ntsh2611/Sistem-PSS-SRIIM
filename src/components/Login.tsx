@@ -1,18 +1,27 @@
 import React, { useState } from 'react';
-import { Lock, ArrowRight } from 'lucide-react';
+import { Lock, ArrowRight, User } from 'lucide-react';
 import { bgImage, logoImage } from '../assets/images';
+import { api } from '../services/api';
+import { User as UserType } from '../types';
 
-export default function Login({ onLogin }: { onLogin: () => void }) {
+export default function Login({ onLogin }: { onLogin: (user: UserType) => void }) {
+  const [id, setId] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'pssriim0001') {
-      onLogin();
-    } else {
-      setError(true);
+    setError('');
+    setLoading(true);
+    try {
+      const user = await api.login(id, password);
+      onLogin(user);
+    } catch (err: any) {
+      setError(err.message || 'Log masuk gagal. Sila semak ID dan Kata Laluan.');
       setPassword('');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,43 +40,70 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
             <img src={logoImage} alt="Logo SRIIM" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-white">Sistem PSS SRIIM</h1>
-          <p className="text-yellow-100 mt-2 text-sm">Sila masukkan kata laluan untuk log masuk</p>
+          <p className="text-yellow-100 mt-2 text-sm">Sila masukkan ID Pengawas dan Kata Laluan</p>
         </div>
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-neutral-800">Kata Laluan</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-neutral-400" />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-neutral-800">ID Pengawas</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-neutral-400" />
+                </div>
+                <input
+                  type="text"
+                  value={id}
+                  onChange={(e) => {
+                    setId(e.target.value);
+                    setError('');
+                  }}
+                  placeholder="Contoh: P001"
+                  className={`w-full pl-11 pr-4 py-3 border rounded-xl outline-none transition-all ${
+                    error 
+                      ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-red-50' 
+                      : 'border-neutral-300 focus:ring-2 focus:ring-amber-600 focus:border-amber-600 bg-neutral-50 hover:bg-white'
+                  }`}
+                  autoFocus
+                />
               </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError(false);
-                }}
-                placeholder="Masukkan kata laluan..."
-                className={`w-full pl-11 pr-4 py-3 border rounded-xl outline-none transition-all ${
-                  error 
-                    ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-red-50' 
-                    : 'border-neutral-300 focus:ring-2 focus:ring-amber-600 focus:border-amber-600 bg-neutral-50 hover:bg-white'
-                }`}
-                autoFocus
-              />
             </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-neutral-800">Kata Laluan</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-neutral-400" />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError('');
+                  }}
+                  placeholder="Masukkan kata laluan..."
+                  className={`w-full pl-11 pr-4 py-3 border rounded-xl outline-none transition-all ${
+                    error 
+                      ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-red-50' 
+                      : 'border-neutral-300 focus:ring-2 focus:ring-amber-600 focus:border-amber-600 bg-neutral-50 hover:bg-white'
+                  }`}
+                />
+              </div>
+            </div>
+            
             {error && (
-              <p className="text-sm text-red-500 font-medium mt-2">Kata laluan tidak sah. Sila cuba lagi.</p>
+              <p className="text-sm text-red-500 font-medium mt-2">{error}</p>
             )}
           </div>
 
           <button
             type="submit"
-            className="w-full bg-yellow-500 hover:bg-yellow-400 text-amber-950 font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group"
+            disabled={loading || !id || !password}
+            className="w-full bg-yellow-500 hover:bg-yellow-400 text-amber-950 font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Log Masuk
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            {loading ? 'Sila tunggu...' : 'Log Masuk'}
+            {!loading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
           </button>
         </form>
       </div>
