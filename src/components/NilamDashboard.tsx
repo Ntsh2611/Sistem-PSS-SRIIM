@@ -43,7 +43,7 @@ export default function NilamDashboard() {
 
   // Compute top 5 monthly (using monthlyData mapping instead of singular month string)
   const top5 = useMemo(() => {
-    return [...nilamRecords].map(student => {
+    const recordsWithScore = [...nilamRecords].map(student => {
       // If a specific month is selected, compute score using that month ONLY
       // otherwise fallback to their overall total JUMLAH books
       const score = selectedMonth !== 'all' 
@@ -54,9 +54,27 @@ export default function NilamDashboard() {
         ...student,
         computedScore: score
       };
-    }).filter(s => s.computedScore > 0) // only include those with actual scores
-      .sort((a, b) => b.computedScore - a.computedScore)
-      .slice(0, 5);
+    }).filter(s => s.computedScore > 0); // only include those with actual scores
+
+    const tahap1 = recordsWithScore.filter(s => {
+      const match = s.className.match(/\d/);
+      if (match) {
+        const digit = parseInt(match[0]);
+        return digit >= 1 && digit <= 3;
+      }
+      return false;
+    }).sort((a, b) => b.computedScore - a.computedScore).slice(0, 5);
+
+    const tahap2 = recordsWithScore.filter(s => {
+      const match = s.className.match(/\d/);
+      if (match) {
+        const digit = parseInt(match[0]);
+        return digit >= 4 && digit <= 6;
+      }
+      return false;
+    }).sort((a, b) => b.computedScore - a.computedScore).slice(0, 5);
+
+    return { tahap1, tahap2 };
   }, [nilamRecords, selectedMonth]);
 
   // Filter valid student records for the table display
@@ -116,33 +134,79 @@ export default function NilamDashboard() {
           </div>
         </div>
 
-        {top5.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {top5.map((student, index) => (
-              <div 
-                key={student.id} 
-                className={`relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-5 flex flex-col items-center text-center transition-transform hover:scale-105 hover:bg-white/20 ${index === 0 ? 'ring-2 ring-yellow-400 shadow-yellow-400/20 shadow-xl md:-translate-y-4' : ''}`}
-              >
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-black/30 rounded-full flex items-center justify-center font-bold text-sm border border-white/10">
-                  #{index + 1}
-                </div>
-                <div className="mb-3">
-                  {getRankIcon(index)}
-                </div>
-                <h3 className="font-bold text-sm line-clamp-3 leading-tight mb-1" title={student.studentName}>{student.studentName}</h3>
-                <p className="text-xs text-indigo-200 mb-3">{student.className}</p>
-                <div className="mt-auto px-4 py-1.5 bg-black/20 rounded-full flex items-center justify-center gap-2">
-                  <BookOpen className="w-3.5 h-3.5 text-yellow-400" />
-                  <span className="font-bold text-lg text-yellow-400">{student.computedScore}</span>
-                </div>
+        <div className="space-y-12">
+          {/* TAHAP 1 */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-px bg-white/20 flex-1"></div>
+              <h3 className="font-bold text-lg text-yellow-300 uppercase tracking-widest drop-shadow-sm">TAHAP 1 (Tahun 1, 2, 3)</h3>
+              <div className="h-px bg-white/20 flex-1"></div>
+            </div>
+            {top5.tahap1.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {top5.tahap1.map((student, index) => (
+                  <div 
+                    key={student.id} 
+                    className={`relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-5 flex flex-col items-center text-center transition-transform hover:scale-105 hover:bg-white/20 ${index === 0 ? 'ring-2 ring-yellow-400 shadow-yellow-400/20 shadow-xl md:-translate-y-4' : ''}`}
+                  >
+                    <div className="absolute -top-3 -right-3 w-8 h-8 bg-black/30 rounded-full flex items-center justify-center font-bold text-sm border border-white/10">
+                      #{index + 1}
+                    </div>
+                    <div className="mb-3">
+                      {getRankIcon(index)}
+                    </div>
+                    <h3 className="font-bold text-sm line-clamp-3 leading-tight mb-1" title={student.studentName}>{student.studentName}</h3>
+                    <p className="text-xs text-indigo-200 mb-3">{student.className}</p>
+                    <div className="mt-auto px-4 py-1.5 bg-black/20 rounded-full flex items-center justify-center gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-yellow-400" />
+                      <span className="font-bold text-lg text-yellow-400">{student.computedScore}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="bg-white/5 p-6 rounded-xl text-center border border-white/10">
+                <p className="text-indigo-200 text-sm">Tiada data NILAM bagi Tahap 1 buat masa ini.</p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="bg-white/10 p-8 rounded-xl text-center backdrop-blur-sm border border-white/20">
-            <p>Tiada data NILAM buat masa ini.</p>
+
+          {/* TAHAP 2 */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-px bg-white/20 flex-1"></div>
+              <h3 className="font-bold text-lg text-yellow-300 uppercase tracking-widest drop-shadow-sm">TAHAP 2 (Tahun 4, 5, 6)</h3>
+              <div className="h-px bg-white/20 flex-1"></div>
+            </div>
+            {top5.tahap2.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {top5.tahap2.map((student, index) => (
+                  <div 
+                    key={student.id} 
+                    className={`relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-5 flex flex-col items-center text-center transition-transform hover:scale-105 hover:bg-white/20 ${index === 0 ? 'ring-2 ring-yellow-400 shadow-yellow-400/20 shadow-xl md:-translate-y-4' : ''}`}
+                  >
+                    <div className="absolute -top-3 -right-3 w-8 h-8 bg-black/30 rounded-full flex items-center justify-center font-bold text-sm border border-white/10">
+                      #{index + 1}
+                    </div>
+                    <div className="mb-3">
+                      {getRankIcon(index)}
+                    </div>
+                    <h3 className="font-bold text-sm line-clamp-3 leading-tight mb-1" title={student.studentName}>{student.studentName}</h3>
+                    <p className="text-xs text-indigo-200 mb-3">{student.className}</p>
+                    <div className="mt-auto px-4 py-1.5 bg-black/20 rounded-full flex items-center justify-center gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-yellow-400" />
+                      <span className="font-bold text-lg text-yellow-400">{student.computedScore}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white/5 p-6 rounded-xl text-center border border-white/10">
+                <p className="text-indigo-200 text-sm">Tiada data NILAM bagi Tahap 2 buat masa ini.</p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
